@@ -1,0 +1,111 @@
+#!/bin/sh
+
+if [ -n "$DB_TYPE_FILE" ]; then
+  DB_TYPE=$(cat $DB_TYPE_FILE)
+elif [ -z "$DB_TYPE" ]; then
+  echo "DB_TYPE not defined"
+  ERROR=1
+fi
+
+if [ -n "$DB_HOST_FILE" ]; then
+  DB_HOST=$(cat $DB_HOST_FILE)
+elif [ -z "$DB_HOST" ]; then
+  echo "DB_HOST not defined"
+  ERROR=1
+fi
+
+if [ -n "$DB_USER_FILE" ]; then
+  DB_USER=$(cat $DB_USER_FILE)
+elif [ -z "$DB_USER" ]; then
+  echo "DB_USER not defined"
+  ERROR=1
+fi
+
+if [ -n "$DB_NAME_FILE" ]; then
+  DB_NAME=$(cat $DB_NAME_FILE)
+elif [ -z "$DB_NAME" ]; then
+  echo "DB_NAME not defined"
+  ERROR=1
+fi 
+
+if [ -n "$DB_PASS_FILE" ]; then
+  DB_PASS=$(cat $DB_PASS_FILE)
+elif [ -z "$DB_PASS" ]; then
+  echo "DB_PASS not defined"
+  ERROR=1
+fi
+
+if [ -n "$SELF_URL_PATH_FILE" ] ; then
+  SELF_URL_PATH=$(cat $SELF_URL_PATH_FILE)
+elif [ -z "$SELF_URL_PATH" ]; then
+  echo "SELF_URL_PATH not defined"
+  ERROR=1
+fi
+
+if [ -n "$ERROR" ] ; then
+  return 1
+fi
+
+(
+cat << EOF
+<?php
+  define('DB_TYPE', '$DB_TYPE');  
+	define('DB_HOST', '$DB_HOST');
+	define('DB_USER', '$DB_USER');
+	define('DB_NAME', '$DB_NAME');
+	define('DB_PASS', '$DB_PASS');
+	define('DB_PORT', '');
+
+	define('MYSQL_CHARSET', 'UTF8');
+
+	define('SELF_URL_PATH', '$SELF_URL_PATH');
+
+	define('SINGLE_USER_MODE', false);
+
+	define('SIMPLE_UPDATE_MODE', false);
+
+	define('PHP_EXECUTABLE', '/usr/bin/php');
+
+	define('LOCK_DIRECTORY', 'lock');
+
+	define('CACHE_DIR', 'cache');
+
+	define('ICONS_DIR', "feed-icons");
+	define('ICONS_URL', "feed-icons");
+
+	define('AUTH_AUTO_CREATE', true);
+
+	define('AUTH_AUTO_LOGIN', true);
+
+	define('FORCE_ARTICLE_PURGE', 0);
+
+	define('SPHINX_SERVER', 'localhost:9312');
+
+	define('SPHINX_INDEX', 'ttrss, delta');
+
+	define('ENABLE_REGISTRATION', false);
+
+	define('REG_NOTIFY_ADDRESS', 'user@your.domain.dom');
+
+	define('REG_MAX_USERS', 10);
+
+	define('SESSION_COOKIE_LIFETIME', 86400);
+
+	define('SMTP_FROM_NAME', 'Tiny Tiny RSS');
+	define('SMTP_FROM_ADDRESS', 'noreply@your.domain.dom');
+
+	define('DIGEST_SUBJECT', '[tt-rss] New headlines for last 24 hours');
+
+	define('CHECK_FOR_UPDATES', true);
+
+	define('ENABLE_GZIP_OUTPUT', false);
+
+	define('PLUGINS', 'auth_internal, note');
+
+	define('LOG_DESTINATION', 'sql');
+
+	define('CONFIG_VERSION', 26);
+EOF
+) > /var/www/html/config.php
+
+exec $*

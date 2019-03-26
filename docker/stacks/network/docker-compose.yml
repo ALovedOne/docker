@@ -1,0 +1,95 @@
+version: "3.3"
+services:
+  adminer:
+    image: adminer
+    read_only: false
+    networks:
+      - default
+      - web_proxy
+    labels:
+      external-hostname: 'adminer'
+      external-port: 8080
+    
+  # TODO certbot/certbot?
+  # TODO registry
+
+  visualizer:
+    image: dockersamples/visualizer:stable
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+    networks:
+      - web_proxy
+    read_only: false 
+    labels:
+      external-hostname: 'visualizer'
+      external-port: 8080
+
+  blog:
+    image: drupal
+    read_only: false
+    volumes:
+      - blog_data:/var/www/html/sites/default
+    networks:
+      - default
+      - web_proxy
+    ports:
+      - "8080:80"
+    labels:
+      external-hostname: 'blog'
+      external-port: 80
+
+  rss:
+    image: alovedone/tt-rss
+    networks:
+      - default
+      - web_proxy
+    ports:
+      - "8081:80"
+    environment:
+      - DB_TYPE=pgsql
+      - DB_HOST_FILE=/var/run/secrets/db_host
+      - DB_USER=tt_rss
+      - DB_PASS_FILE=/var/run/secrets/TT_RSS_DB_PASS
+      - DB_NAME=tt_rss
+      - SELF_URL_PATH_FILE=/var/run/secrets/TT_RSS_SELF_URL
+    secrets:
+      - TT_RSS_DB_PASS
+      - db_host
+      - TT_RSS_SELF_URL
+    labels:
+      external-hostname: 'rss'
+      external-port: 80
+
+  rss_updater:
+    image: alovedone/tt-rss
+    environment:
+      - DB_TYPE=pgsql
+      - DB_HOST_FILE=/var/run/secrets/db_host
+      - DB_USER=tt_rss
+      - DB_PASS_FILE=/var/run/secrets/TT_RSS_DB_PASS
+      - DB_NAME=tt_rss
+      - SELF_URL_PATH_FILE=/var/run/secrets/TT_RSS_SELF_URL
+    secrets:
+      - TT_RSS_DB_PASS
+      - db_host
+      - TT_RSS_SELF_URL
+    command: ["su", "www-data", "-s", "/bin/sh", "-c", "/var/www/html/update_daemon2.php"]
+
+networks:
+  web_proxy:
+    external:
+      name: web_proxy
+
+volumes:
+  blog_data:
+
+secrets:
+  TT_RSS_DB_PASS:
+    external: true
+  TT_RSS_SELF_URL:
+    external: true
+  db_host:
+    external: true

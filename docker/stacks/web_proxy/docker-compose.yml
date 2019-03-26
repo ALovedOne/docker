@@ -1,0 +1,33 @@
+version: "3.3"
+services:
+  www_proxy:
+    image: nginx:alpine
+    configs:
+      - source: nginx.conf
+        target: /etc/nginx/nginx.conf
+        mode: 0444
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - web_proxy
+      - default
+    read_only: false
+    secrets:
+      - web_proxy_certificate.crt
+      - web_proxy_certificate.key
+
+networks:
+  web_proxy:
+    external:
+      name: web_proxy
+
+secrets:
+  web_proxy_certificate.crt:
+    external: true
+  web_proxy_certificate.key:
+    external: true
+
+configs:
+  nginx.conf:
+    file: ./configs/nginx.conf
